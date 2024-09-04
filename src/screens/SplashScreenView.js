@@ -1,21 +1,34 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { StyleSheet, View, Text, StatusBar, Image, Dimensions } from "react-native"
-import Avatar from '../assets/avatar.png'
+import Avatar from '../../assets/avatar.png'
 import LottieView from 'lottie-react-native'
+import { useNavigation, useIsFocused } from '@react-navigation/native'; 
 
 export default function SplashScreenView() {
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            navigation.navigate('Login');
-        }, 10000);
+    const navigation = useNavigation(); 
+    const isFocused = useIsFocused();
 
-        return () => clearTimeout(timer);
-    }, [navigation]);
+    useEffect(() => {
+        let timer;
+
+        if (isFocused) {
+            timer = setTimeout(() => {
+                navigation.navigate('Login');
+            }, 1000);
+        }
+
+        return () => {
+            if (timer) {
+                clearTimeout(timer); 
+            }
+        };
+    }, [isFocused, navigation]); 
+
     return (
         <View style={styles.body}>
         <LottieView  
             style={styles.backgroundAnimation}
-            source={require('./assets/animation/background.json')} 
+            source={require('../../assets/animation/background.json')} 
             autoPlay 
             loop />
             <View style={styles.container}>
@@ -31,7 +44,7 @@ export default function SplashScreenView() {
                         <Text>Viet Nam</Text>
                         <LottieView  
                             style={{width: 30, height: 30}}
-                            source={require('./assets/animation/location.json')} 
+                            source={require('../../assets/animation/location.json')} 
                             autoPlay 
                             loop />
                     </View>
@@ -63,7 +76,7 @@ const styles = StyleSheet.create({
     },
     profile: {
         alignItems: 'center',
-        marginBottomy: 20
+        marginBottom: 20
     },    
     image: {
         width: 100,

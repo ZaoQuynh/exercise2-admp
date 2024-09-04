@@ -1,35 +1,30 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import useUserServices from '../services/UserServices';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 export default function LoginScreenView() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const { user, error, getUser } = useUserServices();
     const navigation = useNavigation();
 
     const handleLogin = async () => {
+        setLoading(true);
         try {
-            const url = `http://172.16.20.210:8080/get-user?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
-            const response = await fetch(url, { 
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+            await getUser(username, password);
+            setLoading(false);
 
-            if (response.ok) {
-                const result = await response.json();
-                console.log('API Response:', result);
-
-                if (result) {
-                    navigation.navigate('Home');
-                } else {
-                    Alert.alert('Error', 'Invalid credentials');
-                }
+            if (user) {  // Nếu user được lấy thành công
+                navigation.navigate('Home');
             } else {
                 Alert.alert('Error', 'Invalid credentials');
             }
         } catch (error) {
+            setLoading(false);
             Alert.alert('Error', 'An error occurred');
         }
     };
@@ -44,18 +39,35 @@ export default function LoginScreenView() {
                     value={username}
                     onChangeText={setUsername}
                 />
+                 <View style={styles.passwordContainer}>
                 <TextInput
                     style={styles.input}
                     placeholder="Password"
-                    secureTextEntry
+                    secureTextEntry={!showPassword}
                     value={password}
                     onChangeText={setPassword}
                 />
-                <TouchableOpacity style={styles.btn_login} onPress={handleLogin}>
-                    <Text style={styles.btn_text}>Login</Text>
+                <TouchableOpacity
+                    style={styles.eyeIcon}
+                    onPress={() => setShowPassword(!showPassword)}
+                >
+                    <Icon name={showPassword ? 'eye' : 'eye-slash'} size={20} color="#5c5c5c" />
                 </TouchableOpacity>
+            </View>
+                
+                {loading ? (<ActivityIndicator size="large" color="#FF5C5C" />) : (
+                    <TouchableOpacity style={styles.btn_login} onPress={handleLogin}>
+                        <Text style={styles.btn_text}>Login</Text>
+                    </TouchableOpacity>
+                )}
+
+                
+                <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+                    <Text style={styles.text_link}>Forgot Password?</Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity style={styles.btn_register} onPress={() => navigation.navigate('Register')}>
-                    <Text style={styles.btn_text}>Haven't account? Register</Text>
+                    <Text style={styles.text_link}>Haven't account? <Text style={styles.highlightText}>Register</Text></Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -89,15 +101,20 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         margin: 10,
     },
-    btn_text: {
-        color: '#fff',
-        fontWeight: 'bold',
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
-    btn_register: {
-        backgroundColor: '#5c5c5c',
+    eyeIcon: {
+        position: 'absolute',
+        right: 25,
+    },
+    text_link: {
         paddingVertical: 10,
         paddingHorizontal: 20,
-        borderRadius: 25,
-        margin: 10,
+        textAlign: 'center'
+    },
+    highlightText: {
+        color: '#FF5C5C'
     },
 });
